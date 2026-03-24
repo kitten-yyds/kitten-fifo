@@ -29,8 +29,9 @@ typedef enum{
 typedef struct{
     uint8_t *buf;
     uint16_t fifo_size;
-    uint16_t peek_max_size;
     void (*fifo_error_handle)(kitten_fifo_error_t);
+    void (*irq_disable)(void);
+    void (*irq_enable)(void);
 }kitten_fifo_config_t;
 
 typedef struct{
@@ -38,17 +39,22 @@ typedef struct{
     uint16_t fifo_size;
     uint16_t head;
     uint16_t tail;
+    uint16_t write_size;
+    uint16_t read_size;
     uint16_t used_size;
-    uint16_t peek_size;
-    uint16_t peek_max_size;
+    bool is_writing;
     void (*fifo_error_handle)(kitten_fifo_error_t);
+    void (*irq_disable)(void);
+    void (*irq_enable)(void);
 }kitten_fifo_t;
 
-bool _kitten_fifo_check_fifo_is_init(kitten_fifo_t *fifo);
-kitten_fifo_error_t kitten_fifo_init(kitten_fifo_config_t *fifo_config,kitten_fifo_t *fifo);
+kitten_fifo_error_t kitten_fifo_init(kitten_fifo_config_t *config,kitten_fifo_t *fifo);
 kitten_fifo_error_t kitten_fifo_clear(kitten_fifo_t *fifo);
-kitten_fifo_error_t kitten_fifo_enqueue(kitten_fifo_t *fifo,uint8_t *data,uint16_t size);
-kitten_fifo_error_t kitten_fifo_peek(kitten_fifo_t *fifo,uint8_t *data,uint16_t *size);
-kitten_fifo_error_t kitten_fifo_dequeue(kitten_fifo_t *fifo);
+kitten_fifo_error_t kitten_fifo_write_with_memcpy(kitten_fifo_t *fifo,uint8_t *data,uint16_t size);
+kitten_fifo_error_t kitten_fifo_write_with_nomemcpy(kitten_fifo_t *fifo);
+kitten_fifo_error_t kitten_fifo_write_with_nomemcpycpt(kitten_fifo_t *fifo,uint16_t size);
+kitten_fifo_error_t kitten_fifo_read_with_memcpy(kitten_fifo_t *fifo,uint8_t *data,uint16_t size);
+kitten_fifo_error_t kitten_fifo_read_with_nomemcpy(kitten_fifo_t *fifo);
+kitten_fifo_error_t kitten_fifo_read_with_nomemcpycpt(kitten_fifo_t *fifo,uint16_t size);
 
 #endif
