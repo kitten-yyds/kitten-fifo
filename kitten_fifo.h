@@ -11,10 +11,9 @@ typedef enum{
     KITTEN_FIFO_ERROR_ARGS,//function args lost
     KITTEN_FIFO_ERROR_CONFIG,//config value error
     KITTEN_FIFO_ERROR_FIFO_NOT_INIT,//fifo not init
-    KITTEN_FIFO_ERROR_EMPTY,
-    KITTEN_FIFO_ERROR_FULL,
-    KITTEN_FIFO_ERROR_NOPEEK,
-    KITTEN_FIFO_ERROR_NODEQUEUE,
+    KITTEN_FIFO_ERROR_ISWRITING,//fifo is writing
+    KITTEN_FIFO_ERROR_NOTWRITING,//fifo is not writing
+    KITTEN_FIFO_ERROR_NOSPACE,//fifo is no space
 }kitten_fifo_error_t;
 
 typedef struct{
@@ -28,13 +27,11 @@ typedef struct{
 typedef struct{
     uint8_t *buf;
     uint16_t fifo_size;
-    uint16_t head;
-    uint16_t tail;
-    uint16_t write_size;
-    uint16_t read_size;
-    uint16_t used_size;
-    bool is_writing;
-    bool is_inited;
+    volatile uint16_t head;
+    volatile uint16_t tail;
+    volatile uint16_t used_size;
+    volatile bool is_writing;
+    volatile bool is_inited;
     void (*fifo_error_handle)(kitten_fifo_error_t);
     void (*irq_disable)(void);
     void (*irq_enable)(void);
