@@ -75,7 +75,7 @@ kitten_fifo_error_t kitten_fifo_write_with_memcpy(kitten_fifo_t *fifo,uint8_t *d
         memcpy(fifo->buf, data + fifo->fifo_size - fifo->head, size - (fifo->fifo_size - fifo->head));
     }
     /*update fifo status*/
-    kitten_fifo_write_with_nomemcpycpt(fifo,size);
+    kitten_fifo_write_cpt(fifo,size);
     return KITTEN_FIFO_NOERROR;
 }
 
@@ -99,7 +99,7 @@ kitten_fifo_error_t kitten_fifo_write_with_nomemcpy(kitten_fifo_t *fifo){
     return KITTEN_FIFO_NOERROR;
 }
 
-kitten_fifo_error_t kitten_fifo_write_with_nomemcpycpt(kitten_fifo_t *fifo,uint16_t size){
+kitten_fifo_error_t kitten_fifo_write_cpt(kitten_fifo_t *fifo,uint16_t size){
     /*check function arguments*/
     if(fifo == NULL || size == 0){
         return KITTEN_FIFO_ERROR_ARGS;
@@ -110,13 +110,114 @@ kitten_fifo_error_t kitten_fifo_write_with_nomemcpycpt(kitten_fifo_t *fifo,uint1
     }
     /*check if fifo is writing*/
     if(!fifo->is_writing){
-        return KITTEN_FIFO_ERROR_NOTWRITING;
+        return KITTEN_FIFO_ERROR_NOTWRITTEN;
     }
     /*update fifo status*/
     fifo->irq_disable();
     fifo->head = (fifo->head + size) % fifo->fifo_size;
     fifo->used_size += size;
     fifo->is_writing = false;
+    fifo->irq_enable();
+    return KITTEN_FIFO_NOERROR;
+}
+
+kitten_fifo_error_t kitten_fifo_read_with_memcpy(kitten_fifo_t *fifo,uint8_t *data,uint16_t *size){
+    /*check function arguments*/
+    if(fifo == NULL || data == NULL || size == NULL){
+        return KITTEN_FIFO_ERROR_ARGS;
+    }
+    /*check if fifo is inited*/
+    if(!fifo->is_inited){
+        return KITTEN_FIFO_ERROR_FIFO_NOT_INIT;
+    }
+    /*check if fifo is reading*/
+    if(fifo->is_reading){
+        return KITTEN_FIFO_ERROR_ISREADING;
+    }else{
+        fifo->irq_disable();
+        fifo->is_reading = true;
+        fifo->irq_enable();
+    }
+    /*begin to read*/
+    if(*size == 0){
+        if(fifo->used_size == 0){
+            *size = 0;
+            fifo->irq_disable();
+            fifo->is_reading = false;
+            fifo->irq_enable();
+            return KITTEN_FIFO_ERROR_NODATA;
+        }else{
+            if(fifo->head > fifo->tail){
+                memcpy(data, fifo->buf + fifo->tail, fifo->head - fifo->tail);
+                *size = fifo->head - fifo->tail;
+            }else{
+                memcpy(data, fifo->buf + fifo->tail, fifo->fifo_size - fifo->tail);
+                memcpy(data + fifo->fifo_size - fifo->tail, fifo->buf, fifo->head);
+                *size = fifo->fifo_size - fifo->tail + fifo->head;
+            }
+        }
+    }else{
+        if(fifo->used_size == 0){
+            *size = 0;
+            fifo->irq_disable();
+            fifo->is_reading = false;
+            fifo->irq_enable();
+            return KITTEN_FIFO_ERROR_NODATA;
+        }else{
+            if(*size > fifo->used_size){
+                memcpy(data, fifo->buf + fifo->tail, fifo->used_size);
+                *size = fifo->used_size;
+            }else{
+                if(fifo->fifo_size - fifo->tail >= *size){
+                    memcpy(data, fifo->buf + fifo->tail, *size);
+                }else{
+                    memcpy(data, fifo->buf + fifo->tail, fifo->fifo_size - fifo->tail);
+                    memcpy(data + fifo->fifo_size - fifo->tail, fifo->buf, *size - (fifo->fifo_size - fifo->tail));
+                }
+            }
+        }
+    }
+    /*update fifo status*/
+    kitten_fifo_read_with_cpt(fifo,*size);
+    return KITTEN_FIFO_NOERROR;
+}
+
+kitten_fifo_error_t kitten_fifo_read_with_nomemcpy(kitten_fifo_t *fifo){
+    /*check function arguments*/
+    if(fifo == NULL){
+        return KITTEN_FIFO_ERROR_ARGS;
+    }
+    /*check if fifo is inited*/
+    if(!fifo->is_inited){
+        return KITTEN_FIFO_ERROR_FIFO_NOT_INIT;
+    }
+    /*check if fifo is reading*/
+    if(!fifo->is_reading){
+        return KITTEN_FIFO_ERROR_NOTREAD;
+    }
+    fifo->irq_disable();
+    fifo->is_reading = true;
+    fifo->irq_enable();
+    return KITTEN_FIFO_NOERROR;
+}
+
+kitten_fifo_error_t kitten_fifo_read_with_cpt(kitten_fifo_t *fifo,uint16_t size){
+    /*check function arguments*/
+    if(fifo == NULL || size == 0){
+        return KITTEN_FIFO_ERROR_ARGS;
+    }
+    /*check if fifo is inited*/
+    if(!fifo->is_inited){
+        return KITTEN_FIFO_ERROR_FIFO_NOT_INIT;
+    }
+    /*check if fifo is reading*/
+    if(!fifo->is_reading){
+        return KITTEN_FIFO_ERROR_NOTREAD;
+    }
+    fifo->irq_disable();
+    fifo->tail = (fifo->tail + size) % fifo->fifo_size;
+    fifo->used_size -= size;
+    fifo->is_reading = false;
     fifo->irq_enable();
     return KITTEN_FIFO_NOERROR;
 }
