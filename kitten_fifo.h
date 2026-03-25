@@ -48,6 +48,6 @@ kitten_fifo_error_t kitten_fifo_write_with_nomemcpy(kitten_fifo_t *fifo);
 kitten_fifo_error_t kitten_fifo_write_cpt(kitten_fifo_t *fifo,uint16_t size);
 kitten_fifo_error_t kitten_fifo_read_with_memcpy(kitten_fifo_t *fifo,uint8_t *data,uint16_t *size);
 kitten_fifo_error_t kitten_fifo_read_with_nomemcpy(kitten_fifo_t *fifo);
-kitten_fifo_error_t kitten_fifo_read_with_cpt(kitten_fifo_t *fifo,uint16_t size);
+kitten_fifo_error_t kitten_fifo_read_cpt(kitten_fifo_t *fifo,uint16_t size);
 
 #endif

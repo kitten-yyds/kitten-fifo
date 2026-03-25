@@ -165,8 +165,14 @@ kitten_fifo_error_t kitten_fifo_read_with_memcpy(kitten_fifo_t *fifo,uint8_t *da
             return KITTEN_FIFO_ERROR_NODATA;
         }else{
             if(*size > fifo->used_size){
-                memcpy(data, fifo->buf + fifo->tail, fifo->used_size);
-                *size = fifo->used_size;
+                if(fifo->head > fifo->tail){
+                    memcpy(data, fifo->buf + fifo->tail, fifo->head - fifo->tail);
+                    *size = fifo->head - fifo->tail;
+                }else{
+                    memcpy(data, fifo->buf + fifo->tail, fifo->fifo_size - fifo->tail);
+                    memcpy(data + fifo->fifo_size - fifo->tail, fifo->buf, fifo->head);
+                    *size = fifo->fifo_size - fifo->tail + fifo->head;
+                }
             }else{
                 if(fifo->fifo_size - fifo->tail >= *size){
                     memcpy(data, fifo->buf + fifo->tail, *size);
@@ -178,7 +184,7 @@ kitten_fifo_error_t kitten_fifo_read_with_memcpy(kitten_fifo_t *fifo,uint8_t *da
         }
     }
     /*update fifo status*/
-    kitten_fifo_read_with_cpt(fifo,*size);
+    kitten_fifo_read_cpt(fifo,*size);
     return KITTEN_FIFO_NOERROR;
 }
 
@@ -192,8 +198,8 @@ kitten_fifo_error_t kitten_fifo_read_with_nomemcpy(kitten_fifo_t *fifo){
         return KITTEN_FIFO_ERROR_FIFO_NOT_INIT;
     }
     /*check if fifo is reading*/
-    if(!fifo->is_reading){
-        return KITTEN_FIFO_ERROR_NOTREAD;
+    if(fifo->is_reading){
+        return KITTEN_FIFO_ERROR_ISREADING;
     }
     fifo->irq_disable();
     fifo->is_reading = true;
@@ -201,7 +207,7 @@ kitten_fifo_error_t kitten_fifo_read_with_nomemcpy(kitten_fifo_t *fifo){
     return KITTEN_FIFO_NOERROR;
 }
 
-kitten_fifo_error_t kitten_fifo_read_with_cpt(kitten_fifo_t *fifo,uint16_t size){
+kitten_fifo_error_t kitten_fifo_read_cpt(kitten_fifo_t *fifo,uint16_t size){
     /*check function arguments*/
     if(fifo == NULL || size == 0){
         return KITTEN_FIFO_ERROR_ARGS;
