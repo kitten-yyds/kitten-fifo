@@ -6,15 +6,6 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define KITTEN_FIFO_NOERROR_INFO "No error"
-#define KITTEN_FIFO_ERROR_ARGS_INFO "Function arguments error"
-#define KITTEN_FIFO_ERROR_CONFIG_INFO "Configuration error"
-#define KITTEN_FIFO_ERROR_FIFO_NOT_INIT_INFO "FIFO not initialized. You must do kitten_fifo_init() before using the FIFO"
-#define KITTEN_FIFO_ERROR_EMPTY_INFO "FIFO is empty"
-#define KITTEN_FIFO_ERROR_FULL_INFO "FIFO is full, please increase the FIFO size or clear the FIFO"
-#define KITTEN_FIFO_ERROR_NOPEEK_INFO "No data to dequeue, maybe you have not peek yet or you have peeked all the data but not dequeue them, please peek the data or clear the FIFO"
-#define KITTEN_FIFO_ERROR_NODEQUEUE_INFO "Failed to peek data, maybe you have peeked the data but not dequeue them, please dequeue the data or clear the FIFO"
-
 typedef enum{
     KITTEN_FIFO_NOERROR = 0,
     KITTEN_FIFO_ERROR_ARGS,//function args lost
