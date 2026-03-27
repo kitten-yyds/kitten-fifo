@@ -11,19 +11,35 @@ This is a simple FIFO library for embedded systems. It provides a simple API for
 Has been tested on STM32H750XBH6 microcontroller with noRTOS. It is currently in the early stages of development and may contain bugs. Use at your own risk.
 
 ## Usage
-First, you need to include the header file `kitten_fifo.h` in your project.  
+To use the library, you need to follow these steps:     
+**Include Library** -> **Init FIFO Buffer** -> **Write/Read FIFO**
+### Include Library
+You need to include the header file `kitten_fifo.h` in your project.  
 ```
 #include "kitten_fifo.h"
 ```
-Then, make sure that your build system (Such as Makefile or Cmake) includes `kitten_fifo.c` in the compilation and that `kitten_fifo.h` is in the include path.
+> Ensure that your build system (Such as Makefile or CMake) adds `kitten_fifo.c` to the compilation sources, and that `kitten_fifo.h` is in your include path.
 
-Second, you need to create a FIFO buffer,like this:
+### Init FIFO Buffer
+You need to create a FIFO buffer, like this: 
 ```
 #define FIFO_SIZE 256
 uint8_t fifo_buffer[FIFO_SIZE];
 ```
-or you can use dynamic memory allocation:
+Or you can use dynamic memory allocation:
 ```
 #define FIFO_SIZE 256
 uint8_t *fifo_buffer = (uint8_t *)malloc(FIFO_SIZE);
+```
+After that, you can initialize the FIFO buffer using the `kitten_fifo_init` function:
+```
+kitten_fifo_config_t fifo_config = {
+    .buf = fifo_buffer,
+    .fifo_size = FIFO_SIZE,
+    .fifo_error_handle = NULL,
+    .irq_disable = __disable_irq,
+    .irq_enable = __enable_irq,
+};
+kitten_fifo_t fifo;
+kitten_fifo_init(&fifo_config, &fifo);
 ```
