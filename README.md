@@ -62,9 +62,24 @@ Example:
 kitten_fifo_error_t err = kitten_fifo_write_with_memcpy(&fifo, data, size);
 //On success, err == KITTEN_FIFO_NOERROR
 ```
+#### Zero-copy Write
+`kitten_fifo_write_with_nomemcpy` only acquires the write lock (sets `is_writing`); it does not copy data or update `head`/`used_size`. You must write data to the FIFO buffer yourself and then call `kitten_fifo_write_cpt` to commit.
+> Free space is checked on commit `kitten_fifo_write_cpt`. If there is not enough room, it returns `KITTEN_FIFO_ERROR_NOSPACE`.
 
-Wait for a moment......, miao~ (ฅ´ω`ฅ) 
+Example:
+```
+kitten_fifo_error_t err;
+err = kitten_fifo_write_with_nomemcpy(&fifo);
+//On success, err == KITTEN_FIFO_NOERROR
+//Write data
+err = kitten_fifo_write_cpt(&fifo, size);
+//On success, err == KITTEN_FIFO_NOERROR
+```
 ### Read FIFO
 Wait for a moment......, miao~ (ฅ´ω`ฅ) 
 ### Error Codes
 Wait for a moment......, miao~ (ฅ´ω`ฅ) 
+### Thanks
+Wait for a moment......, miao~ (ฅ´ω`ฅ) 
+
+![logo](./readme-pic/kitten-yyds.svg)
