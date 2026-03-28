@@ -55,12 +55,12 @@ Function `kitten_fifo_write_with_memcpy` is simple to use. It copies data from t
 2. `data`: Pointer to the source buffer.
 3. `size`: The size of the data (Number of bytes to write.). 
 
-> returns `KITTEN_FIFO_NOERROR` if the write operation is successful, otherwise it returns an error code.
+> It returns `KITTEN_FIFO_NOERROR` if the write operation is successful, otherwise it returns an error code.
 
 Example:
 ```
 kitten_fifo_error_t err = kitten_fifo_write_with_memcpy(&fifo, data, size);
-//If successful, err == KITTEN_FIFO_NOERROR
+//On success, err == KITTEN_FIFO_NOERROR
 ```
 
 Wait for a moment......, miao~ (ฅ´ω`ฅ) 
