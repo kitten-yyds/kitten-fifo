@@ -46,25 +46,25 @@ kitten_fifo_init(&fifo_config, &fifo);
 > The function `kitten_fifo_init` returns `KITTEN_FIFO_NOERROR` if the initialization is successful, otherwise it returns an error code.
 
 ### Write FIFO
-There are two kind of ways to write data to the FIFO buffer:   
-1. Normal write(safe+simple): `kitten_fifo_write_with_memcpy`
-2. Zero-copy write(advanced+fast): `kitten_fifo_write_with_nomemcpy` + `kitten_fifo_write_cpt`
+There are two kinds of ways to write data to the FIFO buffer:   
+1. Normal write (safe & simple): `kitten_fifo_write_with_memcpy`
+2. Zero-copy write (advanced & fast): `kitten_fifo_write_with_nomemcpy` + `kitten_fifo_write_cpt`
 #### Normal Write
-Function `kitten_fifo_write_with_memcpy` is simple to use. It copies the data from the source buffer to the FIFO buffer by using `memcpy`. You need to provide three parameters:
-1. `fifo`: The pointer of the FIFO which you want to operate.
-2. `data`: The pointer of the source buffer.
-3. `size`: The size of the data(in Bytes). 
+Function `kitten_fifo_write_with_memcpy` is simple to use. It copies data from the source buffer to the FIFO buffer using `memcpy`. You need to provide three parameters:
+1. `fifo`: Pointer to the FIFO you want to operate on.
+2. `data`: Pointer to the source buffer.
+3. `size`: The size of the data (Number of bytes to write.). 
 
-> The function returns `KITTEN_FIFO_NOERROR` if the write operation is successful, otherwise it returns an error code.
+> returns `KITTEN_FIFO_NOERROR` if the write operation is successful, otherwise it returns an error code.
 
 Example:
 ```
 kitten_fifo_error_t err = kitten_fifo_write_with_memcpy(&fifo, data, size);
-//if is no error,err will be KITTEN_FIFO_NOERROR
+//If successful, err == KITTEN_FIFO_NOERROR
 ```
 
-wait for a moment......(ฅ´ω`ฅ) 
+Wait for a moment......,miao~ (ฅ´ω`ฅ) 
 ### Read FIFO
-wait for a moment......(ฅ´ω`ฅ) 
+Wait for a moment......,miao~ (ฅ´ω`ฅ) 
 ### Error Codes
-wait for a moment......(ฅ´ω`ฅ) 
+Wait for a moment......,miao~ (ฅ´ω`ฅ) 
