@@ -114,6 +114,9 @@ kitten_fifo_error_t kitten_fifo_write_cpt(kitten_fifo_t *fifo,uint16_t size){
     }
     /*check space*/
     if(size > fifo->fifo_size - fifo->used_size){
+        fifo->irq_disable();
+        fifo->is_writing = false;
+        fifo->irq_enable();
         return KITTEN_FIFO_ERROR_NOSPACE;
     }
     /*update fifo status*/
