@@ -63,8 +63,8 @@ kitten_fifo_error_t err = kitten_fifo_write_with_memcpy(&fifo, data, size);
 //If successful, err == KITTEN_FIFO_NOERROR
 ```
 
-Wait for a moment......,miao~ (ฅ´ω`ฅ) 
+Wait for a moment......, miao~ (ฅ´ω`ฅ) 
 ### Read FIFO
-Wait for a moment......,miao~ (ฅ´ω`ฅ) 
+Wait for a moment......, miao~ (ฅ´ω`ฅ) 
 ### Error Codes
-Wait for a moment......,miao~ (ฅ´ω`ฅ) 
+Wait for a moment......, miao~ (ฅ´ω`ฅ) 
