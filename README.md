@@ -82,4 +82,4 @@ Wait for a moment......, miao~ (ฅ´ω`ฅ)
 ### Thanks
 Wait for a moment......, miao~ (ฅ´ω`ฅ) 
 
-![logo](./readme-pic/kitten-yyds.svg)
+![logo](./readme-pic/kitten-yyds.png)
