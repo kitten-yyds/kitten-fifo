@@ -76,10 +76,14 @@ err = kitten_fifo_write_cpt(&fifo, size);
 //On success, err == KITTEN_FIFO_NOERROR
 ```
 ### Read FIFO
+There are two kinds of ways to read data from the FIFO buffer:
+1. Normal read (safe & simple): `kitten_fifo_read_with_memcpy`
+2. Zero-copy read (advanced & fast): `kitten_fifo_read_with_nomemcpy` + `kitten_fifo_read_cpt`
+#### Normal Read
 Wait for a moment......, miao~ (ฅ´ω`ฅ) 
 ### Error Codes
 Wait for a moment......, miao~ (ฅ´ω`ฅ) 
 ### Thanks
 Wait for a moment......, miao~ (ฅ´ω`ฅ) 
 
-![logo](./readme-pic/kitten-yyds.png)
+![logo](./readme-pic/kitten-yyds.png)s
