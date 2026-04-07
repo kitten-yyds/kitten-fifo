@@ -80,10 +80,62 @@ There are two kinds of ways to read data from the FIFO buffer:
 1. Normal read (safe & simple): `kitten_fifo_read_with_memcpy`
 2. Zero-copy read (advanced & fast): `kitten_fifo_read_with_nomemcpy` + `kitten_fifo_read_cpt`
 #### Normal Read
-Wait for a moment......, miao~ (ฅ´ω`ฅ) 
+Function `kitten_fifo_read_with_memcpy` is simple to use. It copies data from the FIFO buffer to the destination buffer using `memcpy`. You need to provide three parameters:
+1. `fifo`: Pointer to the FIFO you want to operate on.
+2. `data`: Pointer to the destination buffer.
+3. `size`: Pointer to a `uint16_t` used as an in/out parameter. On call, if `*size == 0` the function will read all available bytes; otherwise it requests up to `*size` bytes. On return, `*size` is set to the actual number of bytes copied.
+> Notes:
+> - If the FIFO is empty, the function returns `KITTEN_FIFO_ERROR_NODATA` and sets `*size` to `0`.
+> - If the requested `*size` is greater than the number of available bytes, the function copies only the available bytes and updates `*size` accordingly (it does not pad or block).
+> - If the read wraps around the end of the circular buffer, the function performs two `memcpy` operations to assemble a contiguous output in `data`.
+> - The function sets `is_reading` during the operation; concurrent calls while a read is in progress will return `KITTEN_FIFO_ERROR_ISREADING`.
+
+Example:
+```
+uint16_t len = 0; // 0 means "read all available"
+uint8_t buf[256];
+err = kitten_fifo_read_with_memcpy(&fifo, buf, &len);
+if (err == KITTEN_FIFO_NOERROR) {
+    // buf contains len bytes of data
+}
+```
+#### Zero-copy Read
+
+Zero-copy read lets you access the FIFO internal buffer directly to avoid an extra `memcpy`, which can be faster for large or frequent reads.
+
+Usage:
+
+1. Call `kitten_fifo_read_with_nomemcpy(&fifo)` to acquire the read lock (`is_reading` set). If it returns an error, abort.
+2. Read data directly from `fifo.buf` starting at `fifo.tail`. Data may be split across the end of the circular buffer; if so, read the first contiguous block at `fifo.buf + fifo.tail` (length `min(available, fifo.fifo_size - fifo.tail)`), then read the remainder from `fifo.buf`.
+3. After processing, call `kitten_fifo_read_cpt(&fifo, consumed)` to commit the number of bytes you consumed. `consumed` must be > 0 and no greater than the available bytes.
+
+Notes:
+
+- `kitten_fifo_read_with_nomemcpy` only acquires the lock and does not modify `tail` or `used_size`.
+- `kitten_fifo_read_cpt` updates `tail` and `used_size` and clears the read lock. It validates the `consumed` size and returns `KITTEN_FIFO_ERROR_ARGS` or `KITTEN_FIFO_ERROR_NOTREAD` on error.
+- There is no separate "cancel" API: you must call `kitten_fifo_read_cpt` with the actual number of bytes consumed to release the lock.
+- Concurrent reads are prevented by the `is_reading` flag; attempting a second read while one is in progress returns `KITTEN_FIFO_ERROR_ISREADING`.
+
+Example:
+
+```
+kitten_fifo_error_t err = kitten_fifo_read_with_nomemcpy(&fifo);
+if (err == KITTEN_FIFO_NOERROR) {
+    uint16_t avail = fifo.used_size;
+    uint16_t first = (avail <= fifo.fifo_size - fifo.tail) ? avail : (fifo.fifo_size - fifo.tail);
+    // process fifo.buf + fifo.tail for 'first' bytes
+    if (avail > first) {
+        // process fifo.buf for (avail - first) bytes
+    }
+    // commit the number of bytes actually consumed
+    kitten_fifo_read_cpt(&fifo, consumed);
+}
+```
+
+
 ### Error Codes
 Wait for a moment......, miao~ (ฅ´ω`ฅ) 
 ### Thanks
 Wait for a moment......, miao~ (ฅ´ω`ฅ) 
 
-![logo](./readme-pic/kitten-yyds.png)s
+![logo](./readme-pic/kitten-yyds.png)
