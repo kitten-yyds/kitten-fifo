@@ -1,5 +1,6 @@
+[简体中文](./README_zh.md)
 # A Simple FIFO library for embedded systems
-This is a simple FIFO library for embedded systems. It provides a simple API for creating and managing FIFO buffers. The library is designed to be lightweight and efficient, making it suitable for use in embedded systems with limited resources.    
+This is a simple FIFO (First In First Out) library for embedded systems. It provides a simple API for creating and managing FIFO buffers. The library is designed to be lightweight and efficient, making it suitable for use in embedded systems with limited resources.    
 
 ## Features
 - Simple API for creating and managing FIFO buffers
@@ -87,15 +88,14 @@ Function `kitten_fifo_read_with_memcpy` is simple to use. It copies data from th
 > Notes:
 > - If the FIFO is empty, the function returns `KITTEN_FIFO_ERROR_NODATA` and sets `*size` to `0`.
 > - If the requested `*size` is greater than the number of available bytes, the function copies only the available bytes and updates `*size` accordingly (it does not pad or block).
-> - If the read wraps around the end of the circular buffer, the function performs two `memcpy` operations to assemble a contiguous output in `data`.
 > - The function sets `is_reading` during the operation; concurrent calls while a read is in progress will return `KITTEN_FIFO_ERROR_ISREADING`.
 
 Example:
 ```
-uint16_t len = 0; // 0 means "read all available"
+uint16_t size = 0; // 0 means "read all available"
 uint8_t buf[256];
-kitten_fifo_error_t err = kitten_fifo_read_with_memcpy(&fifo, buf, &len);
-//On success, err == KITTEN_FIFO_NOERROR and len is set to the number of bytes read
+kitten_fifo_error_t err = kitten_fifo_read_with_memcpy(&fifo, buf, &size);
+//On success, err == KITTEN_FIFO_NOERROR and size is set to the number of bytes read
 ```
 #### Zero-copy Read
 Zero-copy read lets you access the FIFO internal buffer directly to avoid an extra `memcpy`, which can be faster for large or frequent reads.
