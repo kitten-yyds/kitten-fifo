@@ -71,7 +71,7 @@ kitten_fifo_error_t err = kitten_fifo_write_with_memcpy(&fifo, data, size);
 kitten_fifo_error_t err;
 err = kitten_fifo_write_with_nomemcpy(&fifo);
 //如果成功, err == KITTEN_FIFO_NOERROR
-//Write data
+//写入数据
 err = kitten_fifo_write_cpt(&fifo, size);
 //如果成功, err == KITTEN_FIFO_NOERROR
 ```
