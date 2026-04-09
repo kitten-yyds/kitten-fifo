@@ -1,19 +1,19 @@
 [English](./README.md)
 # 一个适用于嵌入式系统的简单 FIFO 库
-这是一个适用于嵌入式系统的简单 FIFO（先进先出）库。提供了简单的API用于创建和管理FIFO缓冲器。该库设计轻量高效，适用于资源有限的嵌入式系统。
+这是一个适用于嵌入式系统的简单 FIFO（先进先出）库。提供了简单的API用于创建和管理FIFO缓冲区。该库设计轻量高效，适用于资源有限的嵌入式系统。
 
 ## 特点
-- 简单的API用于创建和管理FIFO缓冲器
-- 清亮高效的
-- 适于用在资源有限的嵌入式系统
+- 简单的API用于创建和管理FIFO缓冲区
+- 轻量高效的
+- 适用于资源有限的嵌入式系统
 - 支持静态和动态内存分配
 
 ## 状态
-已在未运行RTOS的STM32H750XBH6微处理器上完全测试。目前处于开发初期，可能存在bug，请自行承担风险。
+已在无RTOS的STM32H750XBH6微处理器上完全测试。目前处于开发初期，可能存在bug，请自行承担风险。
 
 ## 使用方法
 要使用该库，您需要按照以下步骤操作：
-**包含库文件** -> **初始化FIFO缓冲器** -> **写入/读取FIFO**
+**包含库文件** -> **初始化FIFO缓冲区** -> **写入/读取FIFO**
 ### 包含库文件
 您需要在项目中包含头文件`kitten_fifo.h`。
 ```
@@ -21,8 +21,8 @@
 ```
 > 确认您的构建系统（如Makefile或CMake）将`kitten_fifo.c`添加到编译源文件中，并且`kitten_fifo.h`在您的包含路径中。
 
-### 初始化FIFO缓冲器
-您需要创建一个FIFO缓冲器，如下所示：
+### 初始化FIFO缓冲区
+您需要创建一个FIFO缓冲区，如下所示：
 ```
 #define FIFO_SIZE 256
 uint8_t fifo_buffer[FIFO_SIZE];
@@ -32,7 +32,7 @@ uint8_t fifo_buffer[FIFO_SIZE];
 #define FIFO_SIZE 256
 uint8_t *fifo_buffer = (uint8_t *)malloc(FIFO_SIZE);
 ```
-之后，您可以使用`kitten_fifo_init`函数初始化FIFO缓冲器：
+之后，您可以使用`kitten_fifo_init`函数初始化FIFO缓冲区：
 ```
 kitten_fifo_config_t fifo_config = {
     .buf = fifo_buffer,
@@ -47,7 +47,7 @@ kitten_fifo_init(&fifo_config, &fifo);
 > 如果初始化成功，函数`kitten_fifo_init`返回`KITTEN_FIFO_NOERROR`，否则返回错误代码。
 
 ### 写入FIFO
-这里有两种写入数据到FIFO缓冲器的方式：
+这里有两种写入数据到FIFO缓冲区的方式：
 1. 普通写入（安全且简单）：`kitten_fifo_write_with_memcpy`
 2. 零拷贝写入（高级且快速）：`kitten_fifo_write_with_nomemcpy` + `kitten_fifo_write_cpt`
 #### 普通写入
@@ -76,7 +76,7 @@ err = kitten_fifo_write_cpt(&fifo, size);
 //如果成功, err == KITTEN_FIFO_NOERROR
 ```
 ### 读取FIFO
-这里有两种从FIFO缓冲器读取数据的方式：
+这里有两种从FIFO缓冲区读取数据的方式：
 1. 普通读取（安全且简单）：`kitten_fifo_read_with_memcpy`
 2. 零拷贝读取（高级且快速）：`kitten_fifo_read_with_nomemcpy` + `kitten_fifo_read_cpt`
 #### 普通读取
