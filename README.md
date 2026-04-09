@@ -44,7 +44,11 @@ kitten_fifo_config_t fifo_config = {
 kitten_fifo_t fifo;
 kitten_fifo_init(&fifo_config, &fifo);
 ```
-> The function `kitten_fifo_init` returns `KITTEN_FIFO_NOERROR` if the initialization is successful, otherwise it returns an error code.
+
+> Note:
+> - `fifo_size` is a `uint16_t` (maximum 65535); choose an appropriate size.
+> - `fifo_error_handle` is an error callback pointer and is currently reserved/unused.
+> - The library calls the provided `irq_disable`/`irq_enable` functions to protect critical sections and avoid data tearing.
 
 ### Write FIFO
 There are two kinds of ways to write data to the FIFO buffer:   
@@ -61,20 +65,25 @@ Function `kitten_fifo_write_with_memcpy` is simple to use. It copies data from t
 Example:
 ```
 kitten_fifo_error_t err = kitten_fifo_write_with_memcpy(&fifo, data, size);
-//On success, err == KITTEN_FIFO_NOERROR
+// On success, err == KITTEN_FIFO_NOERROR
 ```
+
 #### Zero-copy Write
-`kitten_fifo_write_with_nomemcpy` only acquires the write lock (sets `is_writing`); it does not copy data or update `head`/`used_size`. You must write data to the FIFO buffer yourself and then call `kitten_fifo_write_cpt` to commit.
-> Free space is checked on commit `kitten_fifo_write_cpt`. If there is not enough room, it returns `KITTEN_FIFO_ERROR_NOSPACE`.
+`kitten_fifo_write_with_nomemcpy` acquires the write lock (`is_writing`) but does not copy data or update `head`/`used_size`. You must write directly into the FIFO buffer, then call `kitten_fifo_write_cpt` to commit the written bytes.
+
+Notes:
+> - `kitten_fifo_write_cpt` checks free space on commit and will return `KITTEN_FIFO_ERROR_NOSPACE` if there is not enough room.
+> - `kitten_fifo_write_cpt` requires `size > 0` and `size <= available_space`; if `size == 0` it returns `KITTEN_FIFO_ERROR_ARGS`.
+> - To avoid long-held locks, complete the write and call `kitten_fifo_write_cpt` promptly after `kitten_fifo_write_with_nomemcpy` succeeds.
 
 Example:
 ```
 kitten_fifo_error_t err;
 err = kitten_fifo_write_with_nomemcpy(&fifo);
-//On success, err == KITTEN_FIFO_NOERROR
-//Write data
+// On success, err == KITTEN_FIFO_NOERROR
+// Write data
 err = kitten_fifo_write_cpt(&fifo, size);
-//On success, err == KITTEN_FIFO_NOERROR
+// On success, err == KITTEN_FIFO_NOERROR
 ```
 ### Read FIFO
 There are two kinds of ways to read data from the FIFO buffer:
@@ -95,26 +104,26 @@ Example:
 uint16_t size = 0; // 0 means "read all available"
 uint8_t buf[256];
 kitten_fifo_error_t err = kitten_fifo_read_with_memcpy(&fifo, buf, &size);
-//On success, err == KITTEN_FIFO_NOERROR and size is set to the number of bytes read
+// On success, err == KITTEN_FIFO_NOERROR and size is set to the number of bytes read
 ```
 #### Zero-copy Read
 Zero-copy read lets you access the FIFO internal buffer directly to avoid an extra `memcpy`, which can be faster for large or frequent reads.
 
 Usage:
 1. Call `kitten_fifo_read_with_nomemcpy(&fifo)` to acquire the read lock (`is_reading` set). If it returns an error, abort.
-2. Read data directly from `fifo.buf` starting at `fifo.tail`. Data may be split across the end of the circular buffer; if so, read the first contiguous block at `fifo.buf + fifo.tail` (length `min(available, fifo.fifo_size - fifo.tail)`), then read the remainder from `fifo.buf`.
-3. After processing, call `kitten_fifo_read_cpt(&fifo, consumed)` to commit the number of bytes you consumed. `consumed` must be > 0 and no greater than the available bytes. 
-> Notes:
-> - `kitten_fifo_read_with_nomemcpy` only acquires the lock and does not modify `tail` or `used_size`.
-> - `kitten_fifo_read_cpt` updates `tail` and `used_size` and clears the read lock. It validates the `consumed` size and returns `KITTEN_FIFO_ERROR_ARGS` or `KITTEN_FIFO_ERROR_NOTREAD` on error.
-> - There is no separate "cancel" API: you must call `kitten_fifo_read_cpt` with the actual number of bytes consumed to release the lock.
-> - Concurrent reads are prevented by the `is_reading` flag; attempting a second read while one is in progress returns `KITTEN_FIFO_ERROR_ISREADING`.
+2. After processing the data directly from `fifo.buf` (may require two-part access), call `kitten_fifo_read_cpt(&fifo, size)` to commit how many bytes you consumed. `size` must be non-zero and no greater than the available bytes.
+
+Notes:
+- `kitten_fifo_read_with_nomemcpy` only acquires the read lock and does not modify `tail` or `used_size`.
+- `kitten_fifo_read_cpt` updates `tail` and `used_size` and clears the read lock. It validates `size` and will return `KITTEN_FIFO_ERROR_ARGS` if `size == 0`, `KITTEN_FIFO_ERROR_NOTREAD` if no read is in progress, or `KITTEN_FIFO_ERROR_NODATA` if `size` exceeds available data.
+- There is no separate cancel API: call `kitten_fifo_read_cpt` with the actual consumed bytes to release the lock.
+- Concurrent reads are prevented by the `is_reading` flag; a second read attempt while one is active returns `KITTEN_FIFO_ERROR_ISREADING`.
 
 Example:
 ```
 kitten_fifo_error_t err = kitten_fifo_read_with_nomemcpy(&fifo);
-//On success, err == KITTEN_FIFO_NOERROR
-//Your read process here
+// On success, err == KITTEN_FIFO_NOERROR
+// Your read process here
 kitten_fifo_read_cpt(&fifo, consumed);
 ```
 

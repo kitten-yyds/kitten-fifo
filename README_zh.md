@@ -44,7 +44,10 @@ kitten_fifo_config_t fifo_config = {
 kitten_fifo_t fifo;
 kitten_fifo_init(&fifo_config, &fifo);
 ```
-> 如果初始化成功，函数`kitten_fifo_init`返回`KITTEN_FIFO_NOERROR`，否则返回错误代码。
+> 注意：    
+> - `fifo_size` 的类型为 `uint16_t`（最大 65535），请据此选择合适的大小。   
+> - `fifo_error_handle` 是一个错误回调函数指针，目前暂时暂未使用。    
+> - 关于 `irq_disable` 和 `irq_enable`函数，库会在需要保护临界区时调用这些函数，以避免数据撕裂。
 
 ### 写入FIFO
 这里有两种写入数据到FIFO缓冲区的方式：
@@ -60,20 +63,23 @@ kitten_fifo_init(&fifo_config, &fifo);
 示例：
 ```
 kitten_fifo_error_t err = kitten_fifo_write_with_memcpy(&fifo, data, size);
-//如果成功, err == KITTEN_FIFO_NOERROR
+// 如果成功, err == KITTEN_FIFO_NOERROR
 ```
 #### 零拷贝写入
-`kitten_fifo_write_with_nomemcpy`仅获取写锁（设置`is_writing`），它不复制数据或更新`head`/`used_size`。您必须写数据到FIFO缓冲区，然后调用`kitten_fifo_write_cpt`来提交。
-> 在提交`kitten_fifo_write_cpt`时检查剩余空间。如果没有足够的空间，它返回`KITTEN_FIFO_ERROR_NOSPACE`。
+`kitten_fifo_write_with_nomemcpy` 仅获取写锁（设置 `is_writing`）；它不会复制数据或更新 `head`/`used_size`。您必须自行将数据写入 FIFO 缓冲区，然后调用 `kitten_fifo_write_cpt` 提交写入的字节数。
+
+> 注意：
+> - 在调用 `kitten_fifo_write_cpt` 时会检查可用空间；若空间不足返回 `KITTEN_FIFO_ERROR_NOSPACE`。
+> - `kitten_fifo_write_cpt` 要求 `size > 0` 且不得超过当前可用空间；若 `size == 0` 会返回 `KITTEN_FIFO_ERROR_ARGS`。
+> - 为避免长时间占用写锁，请在 `kitten_fifo_write_with_nomemcpy` 成功后尽快完成写入并调用 `kitten_fifo_write_cpt`。
 
 示例：
 ```
-kitten_fifo_error_t err;
-err = kitten_fifo_write_with_nomemcpy(&fifo);
-//如果成功, err == KITTEN_FIFO_NOERROR
-//写入数据
-err = kitten_fifo_write_cpt(&fifo, size);
-//如果成功, err == KITTEN_FIFO_NOERROR
+kitten_fifo_error_t err = kitten_fifo_write_with_nomemcpy(&fifo);
+// 如果成功，err == KITTEN_FIFO_NOERROR
+// 写入数据
+err = kitten_fifo_write_cpt(&fifo, to_write);
+// 如果成功，err == KITTEN_FIFO_NOERROR
 ```
 ### 读取FIFO
 这里有两种从FIFO缓冲区读取数据的方式：
@@ -94,8 +100,40 @@ err = kitten_fifo_write_cpt(&fifo, size);
 uint16_t size = 0; // 0 意味着 "读取所有可用字节"
 uint8_t buf[256];
 kitten_fifo_error_t err = kitten_fifo_read_with_memcpy(&fifo, buf, &size);
-//如果成功, err == KITTEN_FIFO_NOERROR，size将会被设置为读取的字节数
+// 如果成功, err == KITTEN_FIFO_NOERROR，size将会被设置为读取的字节数
+```
+#### 零拷贝读取
+零拷贝读取允许您直接访问 FIFO 的内部缓冲区以避免额外的 `memcpy`，对于大块或频繁的读取，这会更快。
+
+使用方法：
+1. 调用 `kitten_fifo_read_with_nomemcpy(&fifo)` 以获取读取锁（`is_reading` 被设置）。若返回错误则中止操作。
+2. 读取完毕后，调用 `kitten_fifo_read_cpt(&fifo, size)` 提交你读取的大小。`size`不为0。
+
+> 注意：
+> - `kitten_fifo_read_with_nomemcpy` 仅获取读取锁，并不会修改 `tail` 或 `used_size`。
+> - `kitten_fifo_read_cpt` 会更新 `tail` 和 `used_size` 并清除读取锁。
+> - 并发读取由 `is_reading` 标志阻止；当已有读取在进行时再次尝试读取会返回 `KITTEN_FIFO_ERROR_ISREADING`。
+
+示例：
+```
+kitten_fifo_error_t err = kitten_fifo_read_with_nomemcpy(&fifo);
+// 如果成功，err == KITTEN_FIFO_NOERROR
+// 在此处直接访问 fifo.buf（可能需要按两段读取）
+err = kitten_fifo_read_cpt(&fifo, size);
+// 如果成功，err == KITTEN_FIFO_NOERROR
 ```
 
-稍等片刻......, 喵~ (ฅ´ω`ฅ)
+### 错误代码
+库定义了以下错误代码（详见 `kitten_fifo.h`）：
+- `KITTEN_FIFO_NOERROR`: 无错误；操作成功。
+- `KITTEN_FIFO_ERROR_ARGS`: 缺少或无效的函数参数。
+- `KITTEN_FIFO_ERROR_CONFIG`: 配置无效（例如：空缓冲区、`fifo_size` 为 0，或配置中缺少 IRQ 回调）。
+- `KITTEN_FIFO_ERROR_FIFO_NOT_INIT`: FIFO 未初始化。请先调用 `kitten_fifo_init`。
+- `KITTEN_FIFO_ERROR_ISWRITING`: 不能开始写入操作，因为已有写入在进行（`is_writing` 已设置）。
+- `KITTEN_FIFO_ERROR_NOTWRITTEN`: 在没有先前调用 `kitten_fifo_write_with_nomemcpy` 的情况下调用了 `kitten_fifo_write_cpt`（没有可提交的写入）。
+- `KITTEN_FIFO_ERROR_ISREADING`: 不能开始读取操作，因为已有读取在进行（`is_reading` 已设置）。
+- `KITTEN_FIFO_ERROR_NOTREAD`: 在没有先前调用 `kitten_fifo_read_with_nomemcpy` 的情况下调用了 `kitten_fifo_read_cpt`（没有可提交的读取）。
+- `KITTEN_FIFO_ERROR_NOSPACE`: FIFO 中没有足够的可用空间来写入请求的字节数。
+- `KITTEN_FIFO_ERROR_NODATA`: 没有可供读取的数据。
+
 ![logo](./readme-pic/kitten-yyds.png)
