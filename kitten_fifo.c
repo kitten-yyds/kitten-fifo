@@ -17,6 +17,7 @@ kitten_fifo_error_t kitten_fifo_init(kitten_fifo_config_t *config,kitten_fifo_t 
     fifo->tail = 0;
     fifo->used_size = 0;
     fifo->is_writing = false;
+    fifo->is_reading = false;
     fifo->is_inited = true;
     fifo->fifo_error_handle = config->fifo_error_handle;
     fifo->irq_disable = config->irq_disable;
@@ -39,6 +40,7 @@ kitten_fifo_error_t kitten_fifo_clear(kitten_fifo_t *fifo){
     fifo->tail = 0;
     fifo->used_size = 0;
     fifo->is_writing = false;
+    fifo->is_reading = false;
     fifo->irq_enable();
     return KITTEN_FIFO_NOERROR;
 }
