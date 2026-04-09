@@ -98,3 +98,4 @@ kitten_fifo_error_t err = kitten_fifo_read_with_memcpy(&fifo, buf, &size);
 ```
 
 稍等片刻......, 喵~ (ฅ´ω`ฅ)
+![logo](./readme-pic/kitten-yyds.png)
