@@ -229,6 +229,14 @@ kitten_fifo_error_t kitten_fifo_read_cpt(kitten_fifo_t *fifo,uint16_t size){
     if(!fifo->is_reading){
         return KITTEN_FIFO_ERROR_NOTREAD;
     }
+    /*check size*/
+    if(size > fifo->used_size){
+        fifo->irq_disable();
+        fifo->is_reading = false;
+        fifo->irq_enable();
+        return KITTEN_FIFO_ERROR_NODATA;
+    }
+    /*update fifo status*/
     fifo->irq_disable();
     fifo->tail = (fifo->tail + size) % fifo->fifo_size;
     fifo->used_size -= size;
